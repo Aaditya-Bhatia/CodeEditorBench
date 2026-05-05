@@ -1,9 +1,11 @@
+import argparse
+import itertools
+import os
 import pandas as pd
 import pymysql
 import re
 from typing import List, Union
 import numpy as np
-import os
 
 config_path = "/home/judge/etc/judge.conf"
 virtual_path = "/var/www/virtual/"
@@ -28,6 +30,14 @@ cursor = conn.cursor()
 
 contest_map={1000:'code_debug',1001:'code_translation',1002:'code_polishment',
 1003:'code_requirement_switch'}
+
+
+def parse_args():
+    parser = argparse.ArgumentParser(description="Compute CodeEditorBench metrics from judge DB results.")
+    parser.add_argument("--model-id", type=int, default=None, help="Optional single model_id to compute metrics for.")
+    parser.add_argument("--primary-output-path", default="/home/judge/metrics/metrics_primary.csv")
+    parser.add_argument("--plus-output-path", default="/home/judge/metrics/metrics_plus.csv")
+    return parser.parse_args()
 
 def estimate_pass_at_k(
     num_samples: Union[int, List[int], np.ndarray],
@@ -56,19 +66,17 @@ def estimate_pass_at_k(
         [estimator(int(n), int(c), k) for n, c in zip(num_samples_it, num_correct)]
     )
 
-sql="""select model_id,model_name from models 
-where 
-model_id>48
-"""
-cursor.execute(sql)
-to_parse=cursor.fetchall()
-
-sql="""select model_id,model_name from models 
-WHERE 
-model_name LIKE 'resubmit%' OR model_name LIKE 'supplement%'
-"""
-cursor.execute(sql)
-to_preplace=cursor.fetchall()
+args = parse_args()
+if args.model_id is not None:
+    cursor.execute("select model_id,model_name from models where model_id=%s", (args.model_id,))
+    to_parse = cursor.fetchall()
+else:
+    sql="""select model_id,model_name from models 
+    where 
+    model_id>48
+    """
+    cursor.execute(sql)
+    to_parse=cursor.fetchall()
 
 def update_result(row):
     if row["contest_id"]==1002:
@@ -197,12 +205,12 @@ for _problems in ['plus','primary']:
     )
     
     outresults["model_type"]="submitted"
-    os.makedirs(f"/home/judge/metrics", exist_ok=True)
+    output_path = args.plus_output_path if _problems == 'plus' else args.primary_output_path
+    os.makedirs(os.path.dirname(output_path) or ".", exist_ok=True)
     if _problems=='plus' and _polish:
-        outresults.to_csv(f"/home/judge/metrics/metrics_plus.csv")
+        outresults.to_csv(output_path)
     elif _problems=='primary' and _polish:
-        outresults.to_csv(f"/home/judge/metrics/metircs_primary.csv")
+        outresults.to_csv(output_path)
 
 cursor.close()
 conn.close()
-

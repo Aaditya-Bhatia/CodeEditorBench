@@ -1,5 +1,5 @@
+import argparse
 import json
-import jsonlines
 import re
 import pdb
 import os
@@ -231,56 +231,91 @@ def filter_code(raw_code, type, file_path):
     
     return code.strip(), not_found
 
-if __name__ == "__main__":
-    datasets = ['debug', 'translate', 'polishment', 'switch']
-    for dataset in datasets:
-        file_dir = f'greedy_result/code_{dataset}/'
-        file_paths = [f for f in os.listdir(file_dir) if os.path.isfile(os.path.join(file_dir, f))]
+def normalize_language(value):
+    if value == 'cpp' or value == 'c++':
+        return 'C++'
+    if value == 'python' or value == 'python3':
+        return 'Python'
+    if value == 'java':
+        return 'Java'
+    raise ValueError(f"Invalid language: {value}")
+
+
+def detect_postprocess_type(file_path):
+    if "Few_Shot" in file_path:
+        return "three"
+    if file_path == 'octocoder_0_end.jsonl' or file_path == 'CodeLlama_34b_hf_0_end.jsonl':
+        return "other"
+    return "zero"
+
+
+def process_file(input_path, output_path):
+    file_path = os.path.basename(input_path)
+    total_not_found = 0
+    process_type = detect_postprocess_type(file_path)
+    data = read_jsonl_file(input_path)
+    os.makedirs(os.path.dirname(output_path), exist_ok=True)
+    with open(output_path, 'w') as f:
+        for d in data[1:]:
+            try:
+                assert len(d['code']) == 1
+            except Exception:
+                print(f"Code length: {len(d['code'])}")
+                d['code'] = " "
+            for i in range(1):
+                new_dict = {}
+                for key, value in d.items():
+                    if key == 'code':
+                        raw_code = value[i]
+                        new_dict[key], not_found = filter_code(raw_code, process_type, file_path)
+                        total_not_found += not_found
+                    elif key == 'completion_id':
+                        new_dict[key] = i
+                    elif key == 'language' or key == 'source_lang' or key == 'target_lang':
+                        new_dict[key] = normalize_language(value)
+                    else:
+                        new_dict[key] = value
+                f.write(json.dumps(new_dict) + '\n')
+    print(f"Processed {input_path} -> {output_path}")
+    print(f"Type: {process_type}")
+    print(f"Total not found: {total_not_found}")
+
+
+def main():
+    parser = argparse.ArgumentParser(description="Postprocess CodeEditorBench raw generation outputs into judge-ready JSONL files.")
+    parser.add_argument("--input-root", default="greedy_result", help="Root directory containing code_<dataset>/ raw JSONL outputs.")
+    parser.add_argument("--output-root", default="final_result/greedy_result", help="Root directory where processed outputs will be written.")
+    parser.add_argument(
+        "--datasets",
+        nargs="+",
+        default=['debug', 'translate', 'polishment', 'switch'],
+        help="Datasets to process.",
+    )
+    parser.add_argument(
+        "--files",
+        nargs="*",
+        default=None,
+        help="Optional basenames to process within each dataset directory.",
+    )
+    args = parser.parse_args()
+
+    selected_files = set(args.files) if args.files else None
+    for dataset in args.datasets:
+        file_dir = os.path.join(args.input_root, f'code_{dataset}')
+        if not os.path.isdir(file_dir):
+            print(f"Skipping missing directory: {file_dir}")
+            continue
+        file_paths = sorted(
+            f for f in os.listdir(file_dir)
+            if os.path.isfile(os.path.join(file_dir, f)) and (selected_files is None or f in selected_files)
+        )
         for file_path in file_paths:
-            total_not_found = 0
-            print(file_path)
-            data = read_jsonl_file(file_dir+file_path)
-            with open(f'final_result/greedy_result/code_{dataset}/{file_path}', 'w') as f:
-                for idx, d in enumerate(data[1:]):
-                    try:
-                        # assert len(d['code']) == 20  # 20 completions
-                        assert len(d['code']) == 1
-                    except:
-                        # print(f"File: {file_path}")
-                        print(f"Code length: {len(d['code'])}")
-                        # pdb.set_trace()
-                        # d['code'] = " " * 20
-                        d['code'] = " "
-                    # for i in range(20):
-                    for i in range(1):
-                        new_dict = {}
-                        for key, value in d.items():
-                            if key == 'code':
-                                raw_code = value[i]
-                                if "Few_Shot" in file_path:
-                                    type = "three"
-                                elif file_path == 'octocoder_0_end.jsonl' or file_path == 'CodeLlama_34b_hf_0_end.jsonl':
-                                    type = "other"
-                                else:
-                                    type = "zero"
-                                new_dict[key], not_found = filter_code(raw_code, type, file_path)
-                                total_not_found += not_found
-                            elif key == 'completion_id':
-                                new_dict[key] = i
-                            elif key == 'language' or key == 'source_lang' or key == 'target_lang':
-                                if value == 'cpp' or value == 'c++':
-                                    new_dict[key] = 'C++'
-                                elif value == 'python' or value == 'python3':
-                                    new_dict[key] = 'Python'
-                                elif value == 'java':
-                                    new_dict[key] = 'Java'
-                                else:
-                                    raise ValueError(f"Invalid language: {value}")
-                            else:
-                                new_dict[key] = value
-                        f.write(json.dumps(new_dict) + '\n')
-                print(f"Type: {type}")
-            print(f"Total not found: {total_not_found}")
-            # pdb.set_trace()
+            input_path = os.path.join(file_dir, file_path)
+            output_path = os.path.join(args.output_root, f'code_{dataset}', file_path)
+            process_file(input_path, output_path)
+
+
+if __name__ == "__main__":
+    main()
 
      

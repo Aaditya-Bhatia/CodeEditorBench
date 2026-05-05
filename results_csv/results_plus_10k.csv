@@ -1,0 +1,13 @@
+model,model_type,ablation,status,generation_pct,eval_pct,code_debug,code_translation,code_requirement_switch,code_polishment
+qwen2.5-3b,base,Baseline,eval_complete,100%,100%,17.3,37.1,4.0,16.4
+qwen2.5-3b,base,LLM-Cleaning (10K),eval_complete,100%,100%,18.9,36.8,4.6,21.6
+qwen2.5-3b,base,Static-Cleaning (10K),eval_complete,100%,100%,14.7,40.9,3.3,24.5
+qwen2.5-3b,base,Unfiltered,eval_complete,100%,100%,14.6,42.4,3.4,28.0
+qwen2.5-coder-7b,base,Baseline,eval_complete,100%,100%,0.0,0.0,0.0,0.2
+qwen2.5-coder-7b,base,LLM-Cleaning (10K),eval_complete,100%,100%,28.1,50.5,12.2,12.8
+qwen2.5-coder-7b,base,Static-Cleaning (10K),eval_complete,100%,100%,25.4,51.3,10.4,23.4
+qwen2.5-coder-7b,base,Unfiltered,eval_partial,100%,99.5%,-,-,-,-
+qwen3-14b-base,base,Baseline,eval_complete,100%,100%,27.2,48.6,15.4,18.9
+qwen3-14b-base,base,LLM-Cleaning (10K),eval_partial,100%,99.5%,-,-,-,-
+qwen3-14b-base,base,Static-Cleaning (10K),eval_partial,100%,99.5%,-,-,-,-
+qwen3-14b-base,base,Unfiltered,eval_partial,100%,99.5%,-,-,-,-

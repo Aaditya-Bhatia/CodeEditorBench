@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(curl -s http://127.0.0.1:9362/v1/models)",
+      "Bash(python3 -m json.tool)",
+      "Bash(conda env:*)",
+      "Bash(export OPENAI_API_BASE=http://127.0.0.1:9362/v1)",
+      "Bash(export OPENAI_API_KEY=EMPTY)",
+      "Bash(export BASE_MODEL=qwen3-14b-base-baseline)",
+      "Bash(export API_MODEL=qwen3-14b-base-baseline)",
+      "Bash(export PROMPT_MODEL=deepseek)",
+      "Bash(python:*)",
+      "Bash(curl -s http://127.0.0.1:9363/v1/models)",
+      "Bash(ls:*)",
+      "Bash(python3 *)",
+      "Bash(ssh *)",
+      "Bash(grep -r \"eval_failed\\\\|failed\\\\|error\" /shared_workspace_mfs/aadi/Projects/CodeEditorBench/scripts/*.py)",
+      "Bash(nvidia-smi *)"
+    ]
+  }
+}

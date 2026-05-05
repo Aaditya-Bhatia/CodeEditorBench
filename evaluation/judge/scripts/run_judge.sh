@@ -3,20 +3,28 @@ if [ ! -d "$log_dir" ]; then
     mkdir -p "$log_dir"
     echo "Created log directory: $log_dir"
 fi
+rm -f /home/judge/etc/judge.pid
+rm -f /home/judge/client*.pid
+rm -f /home/judge/run*/judge_client.pid
+pkill -f '^judged /home/judge$' >/dev/null 2>&1 || true
+pkill -f judge_client >/dev/null 2>&1 || true
+for i in $(seq 0 49); do
+    mkdir -p "/home/judge/run${i}/log"
+done
 judged /home/judge
 while true; do
     current_time=$(date +%s)
     four_minutes_ago=$((current_time - 360))
-    ps aux | grep 'java -Xmx512M -cp .:lib/gson-2.9.1.jar Main' | while read -r line; do
-        pid=$(echo "$line" | awk '{print $2}')
-        start_time=$(echo "$line" | awk '{print $9}')
-        start_hour=$(echo "$start_time" | cut -d':' -f1)
-        start_minute=$(echo "$start_time" | cut -d':' -f2)
-        start_timestamp=$(date -d "$start_hour:$start_minute" +%s)
-        if [ "$start_timestamp" -lt "$four_minutes_ago" ]; then
-            kill -9 "$pid"
-            echo "Killed process $pid started at $start_time"
-        fi
+    ps -eo pid,lstart,cmd --no-headers | while read -r pid weekday month day time year cmd; do
+        case "$cmd" in
+            "java -Xmx512M -cp .:lib/gson-2.9.1.jar Main" | "/usr/bin/python3 Main.py")
+                start_timestamp=$(date -d "$month $day $time $year" +%s)
+                if [ "$start_timestamp" -lt "$four_minutes_ago" ]; then
+                    kill -9 "$pid"
+                    echo "Killed process $pid ($cmd) started at $month $day $time $year"
+                fi
+                ;;
+        esac
     done
     sleep 60
 done

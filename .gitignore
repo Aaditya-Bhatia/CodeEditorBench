@@ -1,3 +1,14 @@
 not published/
 data/
 greedy_result/
+
+# Runtime artifacts
+__pycache__/
+*.pid
+evaluation/judge/log/
+evaluation/judge/monitor/
+evaluation/judge/solution_folder/
+evaluation/judge/scripts/runlog.out
+evaluation/judge/data.tar.gz
+logs/
+benchmark_runs/

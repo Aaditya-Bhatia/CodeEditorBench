@@ -1,3 +1,5 @@
+import argparse
+import gc
 import json
 import re
 import pymysql
@@ -20,6 +22,40 @@ python_parser.set_language(PYTHON_LANGUAGE)
 JAVA_LANGUAGE = Language('/home/judge/build/my-languages.so', 'java')
 java_parser = Parser()
 java_parser.set_language(JAVA_LANGUAGE)
+PYTHON_FUNCTION_QUERY = PYTHON_LANGUAGE.query(
+    """
+    (function_definition name: (identifier)@1 )
+    """
+)
+CPP_FUNCTION_QUERY = CPP_LANGUAGE.query(
+    """
+    (function_declarator
+        declarator: (field_identifier)@1
+    )
+    """
+)
+CPP_CALL_QUERY = CPP_LANGUAGE.query(
+    """
+    (call_expression function: (identifier)@2 )
+    """
+)
+JAVA_METHOD_QUERY = JAVA_LANGUAGE.query(
+    """
+    (method_declaration name: (identifier)@1 )
+    """
+)
+JAVA_CALL_QUERY = JAVA_LANGUAGE.query(
+    """
+    (method_invocation name: (identifier)@2 )
+    """
+)
+PYTHON_CALL_QUERY = PYTHON_LANGUAGE.query(
+    """
+    (call function: (identifier)@2)
+    (call function: attribute: (attribute (identifier)@2))
+    """
+)
+MAX_TEMPLATE_INPUT_BYTES = 1 << 20
 
 language_name=["C","C++","Pascal","Java","Ruby","Bash","Python","PHP","Perl","C#","Obj-C","FreeBasic","Scheme","Clang","Clang++","Lua","JavaScript","Go","SQL","Fortran","Matlab","Cobol","UnknownLanguage"]
 config_path = "/home/judge/etc/judge.conf"
@@ -54,13 +90,10 @@ def read_jsonl_file(file_path):
 
 def remove_no_function_code(language, code):
     if language == PYTHON_LANGUAGE:
-        query_text_1 = '''
-        (function_definition name: (identifier)@1 )
-        '''
         tree = python_parser.parse(bytes(code, "utf8"))
+        query_1 = PYTHON_FUNCTION_QUERY
         
     root_node = tree.root_node
-    query_1 = language.query(query_text_1)
     
     functions_defined = [(node.text, node.parent.text, node.parent.start_point, node.parent.end_point) for node, _ in query_1.captures(root_node)]
     
@@ -93,21 +126,13 @@ def remove_no_function_code(language, code):
 
 def remove_main_code(language, code):
     if language == CPP_LANGUAGE:
-        query_text_1 = '''
-        (function_declarator
-            declarator: (field_identifier)@1
-        )
-        '''
         tree = cpp_parser.parse(bytes(code, "utf8"))
+        query_1 = CPP_FUNCTION_QUERY
         
     elif language == JAVA_LANGUAGE:    
-        query_text_1 = '''
-        (method_declaration name: (identifier)@1 )
-        '''
         tree = java_parser.parse(bytes(code, "utf8"))
+        query_1 = JAVA_METHOD_QUERY
         
-    root_node = tree.root_node
-    query_1 = language.query(query_text_1)
     root_node = tree.root_node
     if language == CPP_LANGUAGE:
         functions_defined = [(node.text, node.parent.parent.text, node.parent.parent.start_point, node.parent.parent.end_point) for node, _ in query_1.captures(root_node)]
@@ -125,38 +150,19 @@ def remove_main_code(language, code):
 
 def find_fun_name(language, code):
     if language == CPP_LANGUAGE:
-        query_text_1 = '''
-        (function_declarator
-            declarator: (field_identifier)@1
-        )
-        '''
-        query_text_2 = '''
-        (call_expression function: (identifier)@2 )
-        '''
-        
         tree = cpp_parser.parse(bytes(code, "utf8"))
+        query_1 = CPP_FUNCTION_QUERY
+        query_2 = CPP_CALL_QUERY
         
     elif language == JAVA_LANGUAGE:    
-        query_text_1 = '''
-        (method_declaration name: (identifier)@1 )
-        '''
-        query_text_2 = '''
-        (method_invocation name: (identifier)@2 )
-        '''
         tree = java_parser.parse(bytes(code, "utf8"))
+        query_1 = JAVA_METHOD_QUERY
+        query_2 = JAVA_CALL_QUERY
     elif language == PYTHON_LANGUAGE:      
-        query_text_1 = '''
-        (function_definition name: (identifier)@1 )
-        '''
-        query_text_2 = '''
-        (call function: (identifier)@2)
-        (call function: attribute: (attribute (identifier)@2))
-        '''
         tree = python_parser.parse(bytes(code, "utf8"))
+        query_1 = PYTHON_FUNCTION_QUERY
+        query_2 = PYTHON_CALL_QUERY
         
-    root_node = tree.root_node
-    query_1 = language.query(query_text_1)
-    query_2 = language.query(query_text_2)
     root_node = tree.root_node
 
     if language == CPP_LANGUAGE:
@@ -591,44 +597,52 @@ parse_function_map = {
     return processed_code,multi_class
 
 
-with open("/home/judge/scripts/idx_problem.jsonl","r") as dicf:
-    idx_problem=json.load(dicf)
-output_folder="/home/judge/solution_folder/processed_solution"
-os.makedirs(output_folder,exist_ok=True)
-language_map={"c++":"C++","cpp":"C++","java":"Java","python":"Python","python3":"Python"}
+def parse_args():
+    parser = argparse.ArgumentParser(description="Prepare processed CodeEditorBench solution files for judge submission.")
+    parser.add_argument(
+        "--model-name",
+        action="append",
+        default=[],
+        help="Only process specific staged model basenames. May be passed multiple times.",
+    )
+    return parser.parse_args()
 
-model_names=[x.replace(".jsonl","") for x in os.listdir(f"/home/judge/solution_folder/code_debug")]
-for model_name in model_names:
-    folders=["code_debug","code_polishment","code_switch","code_translate"]
-    idxprefixes=["Code_Debug","Code_Polishment","Code_Switch","Code_Translate"]
-    output_file=os.path.join(output_folder,model_name+".jsonl")
-    with open(output_file,"w+",encoding="utf-8") as outf:
-        count=0
-        nosolution_num=0
-        for folder,idxprefix in zip(folders,idxprefixes):
-            ori_solution=f"/home/judge/solution_folder/{folder}/{model_name}.jsonl"
-            print("processing",ori_solution)
-            if os.path.exists(ori_solution):
-                with open(ori_solution,"r",encoding="utf-8") as f:
-                    for line in tqdm(f):
-                        if count==0:
-                            metadata={"model_name":model_name,"model_size":None,"model_url":None,
-                            # "greedy_search_decoding":"Y","do_sample":"N",
-                            # "num_output": 1, "temperature": 0
-                            }
-                            outf.write(json.dumps(metadata))
-                            outf.write("\n")
-                        if "model_name" in json.loads(line):
-                            count+=1
-                            continue
-                        else:
-                            inp=json.loads(line)
-                            # print(inp.keys())
-                            """
-                            dict_keys(['num', 'title', 'difficulty', 'source_code', 'scource_lang', 
-                            'average_running_time', 'average_memory', 
-                            'public_tests_input', 'public_tests_output', 'private_tests_input', 'private_tests_output'])
-                            """
+
+def main():
+    args = parse_args()
+    selected_model_names = set(args.model_name)
+
+    with open("/home/judge/scripts/idx_problem.jsonl","r") as dicf:
+        idx_problem=json.load(dicf)
+    output_folder="/home/judge/solution_folder/processed_solution"
+    os.makedirs(output_folder,exist_ok=True)
+    language_map={"c++":"C++","cpp":"C++","java":"Java","python":"Python","python3":"Python"}
+
+    model_names=[x.replace(".jsonl","") for x in os.listdir(f"/home/judge/solution_folder/code_debug")]
+    if selected_model_names:
+        model_names = [name for name in model_names if name in selected_model_names]
+    for model_name in model_names:
+        folders=["code_debug","code_polishment","code_switch","code_translate"]
+        idxprefixes=["Code_Debug","Code_Polishment","Code_Switch","Code_Translate"]
+        output_file=os.path.join(output_folder,model_name+".jsonl")
+        with open(output_file,"w+",encoding="utf-8") as outf:
+            count=0
+            nosolution_num=0
+            for folder,idxprefix in zip(folders,idxprefixes):
+                ori_solution=f"/home/judge/solution_folder/{folder}/{model_name}.jsonl"
+                print("processing",ori_solution)
+                if os.path.exists(ori_solution):
+                    with open(ori_solution,"r",encoding="utf-8") as f:
+                        for line in tqdm(f):
+                            parsed_line = json.loads(line)
+                            if count==0:
+                                metadata={"model_name":model_name,"model_size":None,"model_url":None}
+                                outf.write(json.dumps(metadata))
+                                outf.write("\n")
+                            if "model_name" in parsed_line:
+                                count+=1
+                                continue
+                            inp=parsed_line
                             newoutput={}
                             idx = f'{idxprefix}_{inp["problem_id"]}'
                             newoutput["problem_id"]=idx_problem[idx]
@@ -642,34 +656,45 @@ for model_name in model_names:
                             else:
                                 newoutput["language"]=inplang
                             code1=inp["code"]
+                            if isinstance(code1, list):
+                                code1 = "\n".join("" if part is None else str(part) for part in code1)
+                            elif code1 is not None and not isinstance(code1, str):
+                                code1 = str(code1)
                             newoutput['ori_code']=inp["code"]
                             newoutput['code']=code1
                             geleetcode_sql="select leetcode from problem where problem_id=%s"
                             cursor.execute(geleetcode_sql,newoutput["problem_id"])
                             fetched=cursor.fetchall()
-                            if len(fetched)==0:#跳过被删除的题目
+                            if len(fetched)==0:
                                 count+=1
                                 continue
                             is_leetcode=fetched[0][0]
-                            if is_leetcode!='Y':#非leetcode题不用加模板
+                            if is_leetcode!='Y':
                                 outf.write(json.dumps(newoutput))
                                 outf.write("\n")
-                                count+=1  
-                            else:#leetcode题加模板
+                                count+=1
+                            else:
+                                code_bytes = len(code1.encode("utf-8")) if code1 is not None else 0
+                                if code_bytes > MAX_TEMPLATE_INPUT_BYTES:
+                                    newoutput["skip_submission_reason"] = (
+                                        f"template_input_too_large:{code_bytes} bytes"
+                                    )
+                                    outf.write(json.dumps(newoutput))
+                                    outf.write("\n")
+                                    count += 1
+                                    continue
                                 getfun_sql="select leetcode_fun_name from problem where problem_id=%s"
                                 cursor.execute(getfun_sql,newoutput["problem_id"])
                                 leetcode_fun_name=cursor.fetchall()[0][0]
                                 code=code1
                                 language=newoutput["language"]
-                                # result.append(data)
                                 MultiClass = 0
                                 newoutput.update({"note": 0, "MultiClass": MultiClass, "is_same_name":1, "old_fun_name": None,"new_fun_name": None})
-                                
+
                                 if language == "C++":
                                     code = code.replace("private", "public")
                                     processed_code, MultiClass = process_cpp_code(code)
                                     newoutput["MultiClass"] = MultiClass
-                                    
                                     function_name = find_fun_name(CPP_LANGUAGE, processed_code)
                                     if function_name == leetcode_fun_name:
                                         cpp_fun_name = leetcode_fun_name
@@ -679,18 +704,14 @@ for model_name in model_names:
                                         newoutput["is_same_name"] = 0
                                     newoutput["old_fun_name"] = leetcode_fun_name
                                     newoutput["new_fun_name"] = cpp_fun_name
-                                    
                                     final_code=add_cpp_footer_code(processed_code, function_name)
-                                    
                                     if newoutput["MultiClass"]==0:
                                         newoutput["code"] = final_code
-                                            
+
                                 elif language == "Java":
-                                    
                                     code = code.replace("private", "public")
                                     processed_code, MultiClass = process_java_code(code)
                                     newoutput["MultiClass"] = MultiClass
-                                    
                                     function_name = find_fun_name(JAVA_LANGUAGE, processed_code)
                                     if function_name == leetcode_fun_name:
                                         java_fun_name = leetcode_fun_name
@@ -700,9 +721,7 @@ for model_name in model_names:
                                         newoutput["is_same_name"] = 0
                                     newoutput["old_fun_name"] = leetcode_fun_name
                                     newoutput["new_fun_name"] = java_fun_name
-                                    
                                     final_code = add_java_footer_code(processed_code, function_name)
-                                    
                                     if newoutput["MultiClass"]==0:
                                         newoutput["code"] = final_code
 
@@ -710,11 +729,9 @@ for model_name in model_names:
                                     gettype_sql="select leetcode_fun_input_type from problem where problem_id=%s"
                                     cursor.execute(gettype_sql,newoutput['problem_id'])
                                     leetcode_fun_input_type=cursor.fetchall()[0][0]
-
                                     code = code.replace("private", "public")
                                     processed_code, MultiClass = process_python_code(code)
                                     newoutput["MultiClass"] = MultiClass
-                                    
                                     function_name = find_fun_name(PYTHON_LANGUAGE, processed_code)
                                     if function_name == leetcode_fun_name:
                                         python_fun_name = leetcode_fun_name
@@ -724,16 +741,20 @@ for model_name in model_names:
                                         newoutput["is_same_name"] = 0
                                     newoutput["old_fun_name"] = leetcode_fun_name
                                     newoutput["new_fun_name"] = python_fun_name
-                                    
                                     final_code = add_python_footer_code(processed_code, function_name,leetcode_fun_input_type)
                                     if newoutput["MultiClass"]==0:
                                         newoutput["code"] = final_code
-                
-                                # newoutput["new_fun_name"]=list(newoutput["new_fun_name"])
-                                # print("newoutput",newoutput)   
+
                                 outf.write(json.dumps(newoutput))
                                 outf.write("\n")
-                                count+=1  
+                                count+=1
                                 nosolution_num+=1
-cursor.close()
-conn.close()
+                            if count % 200 == 0:
+                                gc.collect()
+
+    cursor.close()
+    conn.close()
+
+
+if __name__ == "__main__":
+    main()
