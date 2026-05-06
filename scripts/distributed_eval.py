@@ -40,7 +40,7 @@ ASSIGNMENTS = BENCHMARK_DIR / "eval_assignments.jsonl"
 ASSIGNMENTS_LOCK = BENCHMARK_DIR / ".eval_assignments.lock"
 
 DOCKER_IMAGE = "xliudg/code_editor_bench:latest"
-SHARED_IMAGE_DIR = Path("/shared_workspace_mfs/aadi/docker_images")
+SHARED_IMAGE_DIR = Path(os.environ.get("DOCKER_IMAGE_DIR", "/tmp/docker_images"))
 SHARED_IMAGE_TAR = SHARED_IMAGE_DIR / "code_editor_bench.tar.gz"
 
 EVAL_ELIGIBLE_STATUSES = {"generation_complete", "eval_failed"}

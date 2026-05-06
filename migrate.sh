@@ -60,16 +60,39 @@ done
 if [ "${MISSING}" -eq 0 ]; then
   echo "[3/4] All 4 benchmark datasets present."
 else
-  echo "[3/4] Missing ${MISSING}/4 benchmark datasets in ${DATA_DIR}/"
-  echo "      Expected files:"
+  echo "[3/4] Missing ${MISSING}/4 benchmark datasets — downloading from HuggingFace..."
+  mkdir -p "${DATA_DIR}"
+
+  # Use the codeeditorbench env python if available, else system python3
+  _dl_python="python3"
+  _ceb_prefix="$(conda info --envs 2>/dev/null | grep "^${ENV_NAME} " | awk '{print $NF}' || true)"
+  if [[ -n "$_ceb_prefix" && -x "$_ceb_prefix/bin/python" ]]; then
+    _dl_python="$_ceb_prefix/bin/python"
+  fi
+  # Ensure huggingface_hub is available
+  "$_dl_python" -c "import huggingface_hub" 2>/dev/null || \
+    "$_dl_python" -m pip install --quiet huggingface_hub 2>/dev/null || true
+
+  _downloaded=0
   for ds in "${DATASETS[@]}"; do
     if [ -f "${DATA_DIR}/${ds}" ]; then
       echo "        [OK]   ${ds}"
     else
-      echo "        [MISS] ${ds}"
+      echo "        Downloading ${ds}..."
+      if "$_dl_python" -c "
+from huggingface_hub import hf_hub_download
+hf_hub_download('m-a-p/CodeEditorBench', '${ds}', repo_type='dataset', local_dir='${DATA_DIR}')
+"; then
+        echo "        [OK]   ${ds}"
+        ((_downloaded++))
+      else
+        echo "        [FAIL] ${ds} — install huggingface_hub or copy from old server"
+      fi
     fi
   done
-  echo "      Copy them from the old server."
+  if [ "${_downloaded}" -gt 0 ]; then
+    echo "      Downloaded ${_downloaded} dataset(s) from m-a-p/CodeEditorBench"
+  fi
 fi
 
 # ── 4. Directory structure ──────────────────────────────────────────────────

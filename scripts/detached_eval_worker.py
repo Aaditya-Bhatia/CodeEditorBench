@@ -15,8 +15,16 @@ from typing import Dict, Optional
 INITIAL_MYSQL_READY_TIMEOUT_SECONDS = 60
 MYSQL_READY_TIMEOUT_SECONDS = 120
 MYSQL_READY_POLL_SECONDS = 2
-DEFAULT_MASTER_SYNC_SCRIPT = "/shared_workspace_mfs/aadi/Projects/Master_VLLM/master_vllm.py"
-DEFAULT_MASTER_MANIFEST = "/shared_workspace_mfs/aadi/Projects/Master_VLLM/manifests/models_manifest.json"
+_PROJECTS_ROOT = Path(os.environ.get("PROJECTS_ROOT", str(Path(__file__).resolve().parent.parent.parent)))
+def _find_master_root() -> Path:
+    for name in ("Master_VLLM", "Master-Benchmarking-Orchestrator"):
+        candidate = _PROJECTS_ROOT / name
+        if candidate.is_dir():
+            return candidate
+    return _PROJECTS_ROOT / "Master_VLLM"
+_MASTER_DIR = _find_master_root()
+DEFAULT_MASTER_SYNC_SCRIPT = str(_MASTER_DIR / "master_vllm.py")
+DEFAULT_MASTER_MANIFEST = str(_MASTER_DIR / "manifests" / "models_manifest.json")
 
 
 def parse_args():

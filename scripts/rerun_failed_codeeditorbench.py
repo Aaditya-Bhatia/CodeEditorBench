@@ -10,8 +10,17 @@ import sys
 import time
 from datetime import datetime
 
-MASTER_VLLM = "/shared_workspace_mfs/aadi/Projects/Master_VLLM/master_vllm.py"
-NOTIFY_SCRIPT = "/shared_workspace_mfs/aadi/Projects/notify_telegram.py"
+import os
+from pathlib import Path
+_PROJECTS_ROOT = Path(os.environ.get("PROJECTS_ROOT", str(Path(__file__).resolve().parent.parent.parent)))
+def _find_master_root() -> Path:
+    for name in ("Master_VLLM", "Master-Benchmarking-Orchestrator"):
+        candidate = _PROJECTS_ROOT / name
+        if candidate.is_dir():
+            return candidate
+    return _PROJECTS_ROOT / "Master_VLLM"
+MASTER_VLLM = str(_find_master_root() / "master_vllm.py")
+NOTIFY_SCRIPT = str(_PROJECTS_ROOT / "notify_telegram.py")
 MAX_CONTAINERS = 5
 POLL_INTERVAL = 60  # seconds between container-count checks
 

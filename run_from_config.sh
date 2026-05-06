@@ -38,16 +38,12 @@ if [[ ! -f "$RUNNER" ]]; then
     exit 1
 fi
 
-# Activate conda
-if ! command -v conda &>/dev/null; then
-    for _conda_bin in "${CONDA_EXE}" "$(which conda 2>/dev/null)"; do
-        if [[ -n "$_conda_bin" && -x "$_conda_bin" ]]; then
-            eval "$("$_conda_bin" shell.bash hook)" && break
-        fi
-    done
-fi
-if ! command -v conda &>/dev/null; then
-    echo "Error: conda not found in PATH. Install conda or set CONDA_EXE." >&2
+# Activate conda — always run the shell hook so `conda activate` works
+_conda_bin="${CONDA_EXE:-$(command -v conda 2>/dev/null || echo "$HOME/miniconda3/bin/conda")}"
+if [[ -x "$_conda_bin" ]]; then
+    eval "$("$_conda_bin" shell.bash hook)"
+else
+    echo "Error: conda not found. Set CONDA_EXE or add conda to PATH." >&2
     exit 1
 fi
 if ! conda activate codeeditorbench 2>/dev/null; then
