@@ -57,6 +57,7 @@ def parse_args():
     parser.add_argument("--end-idx", type=int, default=-1)
     parser.add_argument("--eval-max-wait-seconds", type=int, default=4 * 60 * 60, help="Maximum wall-clock time to wait for detached evaluation to finish.")
     parser.add_argument("--eval-stall-timeout-seconds", type=int, default=30 * 60, help="Fail detached evaluation if queue status stops making progress for this long.")
+    parser.add_argument("--generation-only", action="store_true", help="Run generation and postprocessing only, skip Docker evaluation.")
     return parser.parse_args()
 
 
@@ -407,43 +408,48 @@ def main():
                 raise FileNotFoundError(f"Expected processed output missing: {source_path}")
             shutil.copyfile(source_path, target_path)
 
-        eval_log_path = logs_root / "detached_eval.log"
-        worker_cmd = [
-            sys.executable,
-            str(repo_root / "scripts" / "detached_eval_worker.py"),
-            "--run-name",
-            run_name,
-            "--model-name",
-            display_model_name,
-            "--config-path",
-            str(config_path),
-            "--container-name",
-            container_name,
-            "--judge-dir",
-            str(judge_dir),
-            "--judge-template-dir",
-            str(judge_template_dir),
-            "--notify-script",
-            args.notify_script,
-            "--master-sync-script",
-            args.master_sync_script,
-            "--master-manifest",
-            args.master_manifest,
-            "--summary-path",
-            str(summary_path),
-            "--max-wait-seconds",
-            str(args.eval_max_wait_seconds),
-            "--stall-timeout-seconds",
-            str(args.eval_stall_timeout_seconds),
-        ]
-        with eval_log_path.open("w") as log_file:
-            worker = subprocess.Popen(
-                worker_cmd,
-                cwd=str(repo_root),
-                stdout=log_file,
-                stderr=subprocess.STDOUT,
-                start_new_session=True,
-            )
+        worker = None
+        eval_log_path = None
+        if args.generation_only:
+            print(f"=== Generation complete (--generation-only). Outputs in: {clean_root} ===")
+        else:
+            eval_log_path = logs_root / "detached_eval.log"
+            worker_cmd = [
+                sys.executable,
+                str(repo_root / "scripts" / "detached_eval_worker.py"),
+                "--run-name",
+                run_name,
+                "--model-name",
+                display_model_name,
+                "--config-path",
+                str(config_path),
+                "--container-name",
+                container_name,
+                "--judge-dir",
+                str(judge_dir),
+                "--judge-template-dir",
+                str(judge_template_dir),
+                "--notify-script",
+                args.notify_script,
+                "--master-sync-script",
+                args.master_sync_script,
+                "--master-manifest",
+                args.master_manifest,
+                "--summary-path",
+                str(summary_path),
+                "--max-wait-seconds",
+                str(args.eval_max_wait_seconds),
+                "--stall-timeout-seconds",
+                str(args.eval_stall_timeout_seconds),
+            ]
+            with eval_log_path.open("w") as log_file:
+                worker = subprocess.Popen(
+                    worker_cmd,
+                    cwd=str(repo_root),
+                    stdout=log_file,
+                    stderr=subprocess.STDOUT,
+                    start_new_session=True,
+                )
     except Exception as exc:
         update_summary(
             summary_path,
@@ -457,8 +463,8 @@ def main():
         summary_path,
         status="generation_complete",
         staged_name=staged_name,
-        eval_worker_pid=worker.pid,
-        eval_log_path=str(eval_log_path),
+        eval_worker_pid=worker.pid if worker else None,
+        eval_log_path=str(eval_log_path) if eval_log_path else None,
         generation_completed_at_utc=datetime.now(timezone.utc).isoformat(),
         error=None,
         generation_failed_at_utc=None,
@@ -467,10 +473,16 @@ def main():
         metrics_path=None,
     )
 
-    send_telegram(
-        args.notify_script,
-        benchmark_message(display_model_name, "eval_pending"),
-    )
+    if args.generation_only:
+        send_telegram(
+            args.notify_script,
+            benchmark_message(display_model_name, "generation_complete (gen-only)"),
+        )
+    else:
+        send_telegram(
+            args.notify_script,
+            benchmark_message(display_model_name, "eval_pending"),
+        )
     summary = json.loads(summary_path.read_text())
     print(json.dumps(summary, indent=2))
 

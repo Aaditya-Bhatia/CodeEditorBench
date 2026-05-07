@@ -53,4 +53,20 @@ if ! conda activate codeeditorbench 2>/dev/null; then
 fi
 
 cd "$SCRIPT_DIR"
-exec python "$RUNNER" "$@"
+
+# Check if the YAML config requests generation-only mode
+_gen_only=""
+if [[ -f "$1" ]]; then
+    _gen_only="$(python -c "
+import yaml, sys
+with open(sys.argv[1]) as f:
+    c = yaml.safe_load(f)
+print('yes' if c.get('generation_only', False) else 'no')
+" "$1" 2>/dev/null || echo "no")"
+fi
+
+if [[ "$_gen_only" == "yes" ]]; then
+    exec python "$RUNNER" "$@" --generation-only
+else
+    exec python "$RUNNER" "$@"
+fi
