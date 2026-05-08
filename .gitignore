@@ -1,7 +1,5 @@
 not published/
 data/
-greedy_result/
-
 # Runtime artifacts
 __pycache__/
 *.pid
@@ -11,8 +9,4 @@ evaluation/judge/solution_folder/
 evaluation/judge/scripts/runlog.out
 evaluation/judge/data.tar.gz
 logs/
-
-# Keep generation outputs in benchmark_runs/ committable for remote eval workflow.
-# Ignore only Docker judge artifacts within each run.
-benchmark_runs/**/judge/
-benchmark_runs/**/logs/
+benchmark_runs/
