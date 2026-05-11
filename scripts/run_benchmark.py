@@ -17,6 +17,7 @@ import yaml
 
 
 DATASETS = ["debug", "translate", "polishment", "switch"]
+CODEEDITORBENCH_MAX_TOKENS = 2048
 _PROJECTS_ROOT = Path(os.environ.get("PROJECTS_ROOT", str(Path(__file__).resolve().parent.parent.parent)))
 DEFAULT_NOTIFY_SCRIPT = str(_PROJECTS_ROOT / "notify_telegram.py")
 def _find_master_root() -> Path:
@@ -347,7 +348,7 @@ def main():
             "--top_p",
             str(config.get("top_p", 1.0)),
             "--max_tokens",
-            str(config.get("max_tokens", 2048)),
+            str(CODEEDITORBENCH_MAX_TOKENS),
             "--prompt_type",
             "zero",
             "--start_idx",
