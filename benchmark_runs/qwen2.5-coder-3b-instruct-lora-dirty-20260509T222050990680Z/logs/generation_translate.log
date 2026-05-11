@@ -1,0 +1,8 @@
+Traceback (most recent call last):
+  File "openai_compatible_inference.py", line 310, in <module>
+    main()
+  File "openai_compatible_inference.py", line 225, in main
+    dataset = JsonlDataset(input_data_path)[args.start_idx:args.end_idx]
+  File "/workspace/CodeEditorBench/dataset.py", line 8, in __init__
+    with open(file_path, 'r') as f:
+FileNotFoundError: [Errno 2] No such file or directory: './data/code_translate_primary.jsonl'

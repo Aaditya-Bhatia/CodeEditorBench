@@ -1,0 +1,31 @@
+{
+  "run_name": "qwen3-4b-base-lora-dirty-20260510T162354221130Z",
+  "config_path": "/workspace/Master-Benchmarking-Orchestrator/runtime/slot0-codeeditorbench-qwen3-4b-base-lora-dirty.yaml",
+  "api_base": "http://127.0.0.1:9600/v1",
+  "api_model": "editbench_adapter",
+  "model_name": "qwen3-4b-base-lora-dirty",
+  "prompt_model": "deepseek",
+  "batch_size": 64,
+  "max_concurrent": 96,
+  "dataset_parallelism": 4,
+  "datasets": [
+    "debug",
+    "translate",
+    "polishment",
+    "switch"
+  ],
+  "raw_root": "/workspace/CodeEditorBench/benchmark_runs/qwen3-4b-base-lora-dirty-20260510T162354221130Z/raw",
+  "clean_root": "/workspace/CodeEditorBench/benchmark_runs/qwen3-4b-base-lora-dirty-20260510T162354221130Z/clean",
+  "judge_template_dir": "/workspace/CodeEditorBench/evaluation/judge",
+  "judge_dir": "/workspace/CodeEditorBench/benchmark_runs/qwen3-4b-base-lora-dirty-20260510T162354221130Z/judge",
+  "judge_solution_root": "/workspace/CodeEditorBench/benchmark_runs/qwen3-4b-base-lora-dirty-20260510T162354221130Z/judge/solution_folder",
+  "container_name": "codeeditorbench_judge_qwen3-4b-base-lora-dirty-20260510t162354_6306bf71a1",
+  "status": "running_generation",
+  "generation_started_at_utc": "2026-05-10T16:23:54.221587+00:00",
+  "generation_logs": {
+    "debug": "/workspace/CodeEditorBench/benchmark_runs/qwen3-4b-base-lora-dirty-20260510T162354221130Z/logs/generation_debug.log",
+    "translate": "/workspace/CodeEditorBench/benchmark_runs/qwen3-4b-base-lora-dirty-20260510T162354221130Z/logs/generation_translate.log",
+    "polishment": "/workspace/CodeEditorBench/benchmark_runs/qwen3-4b-base-lora-dirty-20260510T162354221130Z/logs/generation_polishment.log",
+    "switch": "/workspace/CodeEditorBench/benchmark_runs/qwen3-4b-base-lora-dirty-20260510T162354221130Z/logs/generation_switch.log"
+  }
+}

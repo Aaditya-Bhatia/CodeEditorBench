@@ -1,0 +1,36 @@
+Inference:   0%|                                                                                                                   | 0/40 [00:00<?, ?it/s]Inference:   2%|██▋                                                                                                        | 1/40 [01:30<58:53, 90.61s/it]Inference:   5%|█████▎                                                                                                     | 2/40 [02:17<41:00, 64.74s/it]Inference:   8%|████████                                                                                                   | 3/40 [02:59<33:27, 54.27s/it]Inference:  10%|██████████▋                                                                                                | 4/40 [03:48<31:19, 52.21s/it]Inference:  12%|█████████████▍                                                                                             | 5/40 [04:40<30:33, 52.37s/it]Inference:  15%|████████████████                                                                                           | 6/40 [05:16<26:29, 46.74s/it]Inference:  18%|██████████████████▋                                                                                        | 7/40 [05:55<24:15, 44.12s/it]Inference:  20%|█████████████████████▍                                                                                     | 8/40 [06:45<24:31, 45.98s/it]Inference:  22%|████████████████████████                                                                                   | 9/40 [07:29<23:28, 45.45s/it]Inference:  25%|██████████████████████████▌                                                                               | 10/40 [08:08<21:41, 43.39s/it]Inference:  28%|█████████████████████████████▏                                                                            | 11/40 [08:48<20:31, 42.47s/it]Inference:  30%|███████████████████████████████▊                                                                          | 12/40 [09:34<20:13, 43.34s/it]Inference:  32%|██████████████████████████████████▍                                                                       | 13/40 [10:32<21:30, 47.78s/it]Inference:  35%|█████████████████████████████████████                                                                     | 14/40 [11:17<20:22, 47.02s/it]Inference:  38%|███████████████████████████████████████▊                                                                  | 15/40 [11:54<18:20, 44.03s/it]Inference:  40%|██████████████████████████████████████████▍                                                               | 16/40 [12:41<17:56, 44.84s/it]Inference:  42%|█████████████████████████████████████████████                                                             | 17/40 [14:23<23:46, 62.04s/it]Inference:  45%|███████████████████████████████████████████████▋                                                          | 18/40 [15:26<22:54, 62.50s/it]Inference:  48%|██████████████████████████████████████████████████▎                                                       | 19/40 [16:13<20:14, 57.83s/it][WARN] Skipping prompt (46928 chars): Error code: 400 - {'error': {'message': "This model's maximum context length is 32768 tokens. However, you requested 4096 output tokens and your prompt contains at least 28673 input tokens, for a total of at least 32769 tokens. Please reduce the length of the input prompt or the number of requested output tokens. (parameter=input_tokens, value=28673)", 'type': 'BadRequestError', 'param': 'input_tokens', 'code': 400}}
+Inference:  50%|█████████████████████████████████████████████████████                                                     | 20/40 [18:42<28:20, 85.03s/it]Inference:  52%|███████████████████████████████████████████████████████▋                                                  | 21/40 [19:38<24:14, 76.54s/it]Inference:  55%|█████████████████████████████████████████████████████████▊                                               | 22/40 [22:36<32:06, 107.01s/it]Inference:  57%|████████████████████████████████████████████████████████████▉                                             | 23/40 [23:14<24:26, 86.24s/it]Inference:  60%|███████████████████████████████████████████████████████████████▌                                          | 24/40 [23:30<17:22, 65.16s/it]Inference:  62%|██████████████████████████████████████████████████████████████████▎                                       | 25/40 [23:42<12:19, 49.30s/it][WARN] Skipping prompt (7039 chars): Connection error.
+[WARN] Skipping prompt (5838 chars): Connection error.
+[WARN] Skipping prompt (1122 chars): Connection error.
+[WARN] Skipping prompt (2550 chars): Connection error.
+[WARN] Skipping prompt (1083 chars): Connection error.
+[WARN] Skipping prompt (4496 chars): Connection error.
+[WARN] Skipping prompt (6297 chars): Connection error.
+[WARN] Skipping prompt (948 chars): Connection error.
+[WARN] Skipping prompt (1252 chars): Connection error.
+[WARN] Skipping prompt (1128 chars): Connection error.
+[WARN] Skipping prompt (1153 chars): Connection error.
+[WARN] Skipping prompt (1364 chars): Connection error.
+[WARN] Skipping prompt (3165 chars): Connection error.
+[WARN] Skipping prompt (5125 chars): Connection error.
+[WARN] Skipping prompt (1447 chars): Connection error.
+[WARN] Skipping prompt (2652 chars): Connection error.
+[WARN] Skipping prompt (1939 chars): Connection error.
+[WARN] Skipping prompt (1244 chars): Connection error.
+[WARN] Skipping prompt (1471 chars): Connection error.
+[WARN] Skipping prompt (1263 chars): Connection error.
+[WARN] Skipping prompt (1658 chars): Connection error.
+[WARN] Skipping prompt (1410 chars): Connection error.
+[WARN] Skipping prompt (986 chars): Connection error.
+[WARN] Skipping prompt (1166 chars): Connection error.
+[WARN] Skipping prompt (4038 chars): Connection error.
+[WARN] Skipping prompt (881 chars): Connection error.
+[WARN] Skipping prompt (1062 chars): Connection error.
+[WARN] Skipping prompt (1032 chars): Connection error.
+[WARN] Skipping prompt (1331 chars): Connection error.
+[WARN] Skipping prompt (1772 chars): Connection error.
+[WARN] Skipping prompt (1353 chars): Connection error.
+[WARN] Skipping prompt (1460 chars): Connection error.
+[WARN] Skipping prompt (1577 chars): Connection error.
+[WARN] Skipping prompt (1242 chars): Connection error.
+[WARN] Skipping prompt (1878 chars): Connection error.

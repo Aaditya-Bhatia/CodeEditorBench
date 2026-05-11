@@ -1,0 +1,62 @@
+{
+  "run_name": "qwen2.5-3b-lora-dirty-20260509T225739227055Z",
+  "config_path": "/workspace/Master-Benchmarking-Orchestrator/runtime/slot1-codeeditorbench-qwen2.5-3b-lora-dirty.yaml",
+  "api_base": "http://127.0.0.1:9650/v1",
+  "api_model": "editbench_adapter",
+  "model_name": "qwen2.5-3b-lora-dirty",
+  "prompt_model": "deepseek",
+  "batch_size": 64,
+  "max_concurrent": 64,
+  "dataset_parallelism": 4,
+  "datasets": [
+    "debug",
+    "translate",
+    "polishment",
+    "switch"
+  ],
+  "raw_root": "/workspace/CodeEditorBench/benchmark_runs/qwen2.5-3b-lora-dirty-20260509T225739227055Z/raw",
+  "clean_root": "/workspace/CodeEditorBench/benchmark_runs/qwen2.5-3b-lora-dirty-20260509T225739227055Z/clean",
+  "judge_template_dir": "/workspace/CodeEditorBench/evaluation/judge",
+  "judge_dir": "/workspace/CodeEditorBench/benchmark_runs/qwen2.5-3b-lora-dirty-20260509T225739227055Z/judge",
+  "judge_solution_root": "/workspace/CodeEditorBench/benchmark_runs/qwen2.5-3b-lora-dirty-20260509T225739227055Z/judge/solution_folder",
+  "container_name": "codeeditorbench_judge_qwen2.5-3b-lora-dirty-20260509t225739227_4ef517ddaa",
+  "status": "generation_complete",
+  "generation_started_at_utc": "2026-05-09T22:57:39.227508+00:00",
+  "generation_logs": {
+    "debug": "/workspace/CodeEditorBench/benchmark_runs/qwen2.5-3b-lora-dirty-20260509T225739227055Z/logs/generation_debug.log",
+    "translate": "/workspace/CodeEditorBench/benchmark_runs/qwen2.5-3b-lora-dirty-20260509T225739227055Z/logs/generation_translate.log",
+    "polishment": "/workspace/CodeEditorBench/benchmark_runs/qwen2.5-3b-lora-dirty-20260509T225739227055Z/logs/generation_polishment.log",
+    "switch": "/workspace/CodeEditorBench/benchmark_runs/qwen2.5-3b-lora-dirty-20260509T225739227055Z/logs/generation_switch.log"
+  },
+  "generation_jobs": {
+    "debug": {
+      "pid": 19531,
+      "log_path": "/workspace/CodeEditorBench/benchmark_runs/qwen2.5-3b-lora-dirty-20260509T225739227055Z/logs/generation_debug.log",
+      "return_code": 0
+    },
+    "translate": {
+      "pid": 19532,
+      "log_path": "/workspace/CodeEditorBench/benchmark_runs/qwen2.5-3b-lora-dirty-20260509T225739227055Z/logs/generation_translate.log",
+      "return_code": 0
+    },
+    "polishment": {
+      "pid": 19533,
+      "log_path": "/workspace/CodeEditorBench/benchmark_runs/qwen2.5-3b-lora-dirty-20260509T225739227055Z/logs/generation_polishment.log",
+      "return_code": 0
+    },
+    "switch": {
+      "pid": 19534,
+      "log_path": "/workspace/CodeEditorBench/benchmark_runs/qwen2.5-3b-lora-dirty-20260509T225739227055Z/logs/generation_switch.log",
+      "return_code": 0
+    }
+  },
+  "staged_name": "qwen2.5-3b-lora-dirty-20260509T225739227055Z.jsonl",
+  "eval_worker_pid": null,
+  "eval_log_path": null,
+  "generation_completed_at_utc": "2026-05-09T23:07:57.931591+00:00",
+  "error": null,
+  "generation_failed_at_utc": null,
+  "eval_failed_at_utc": null,
+  "eval_completed_at_utc": null,
+  "metrics_path": null
+}
