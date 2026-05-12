@@ -53,7 +53,7 @@ DATASETS=(
 MISSING=0
 for ds in "${DATASETS[@]}"; do
   if [ ! -f "${DATA_DIR}/${ds}" ]; then
-    ((MISSING++))
+    MISSING=$((MISSING + 1))
   fi
 done
 
@@ -84,7 +84,7 @@ from huggingface_hub import hf_hub_download
 hf_hub_download('m-a-p/CodeEditorBench', '${ds}', repo_type='dataset', local_dir='${DATA_DIR}')
 "; then
         echo "        [OK]   ${ds}"
-        ((_downloaded++))
+        _downloaded=$((_downloaded + 1))
       else
         echo "        [FAIL] ${ds} — install huggingface_hub or copy from old server"
       fi

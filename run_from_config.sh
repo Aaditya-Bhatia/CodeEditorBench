@@ -48,7 +48,9 @@ else
 fi
 if ! conda activate codeeditorbench 2>/dev/null; then
     if ! conda activate coder 2>/dev/null; then
-        conda activate SFT_env
+        if ! conda activate SFT_env 2>/dev/null; then
+            conda activate vllm_env
+        fi
     fi
 fi
 

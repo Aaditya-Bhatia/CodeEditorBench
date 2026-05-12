@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import argparse
 import asyncio
 import importlib
@@ -171,6 +173,19 @@ def main():
     parser.add_argument("--prompt_type", default="zero", type=str, help="Type of prompts, zero, three, or cot.")
     parser.add_argument("--start_idx", default=0, type=int, help="Start index for data processing.")
     parser.add_argument("--end_idx", default=-1, type=int, help="End index for data processing.")
+    parser.add_argument(
+        "--resume-indices-file",
+        dest="resume_indices_file",
+        default=None,
+        type=str,
+        help=(
+            "Optional path to a newline-delimited file of 0-based dataset positions to "
+            "process. When set, --start_idx/--end_idx are ignored, the line-count "
+            "auto-resume is skipped, and the existing output JSONL (which must already "
+            "exist with its metadata header) is appended to. Used by run_benchmark.py to "
+            "refill the missing problem_ids of a partial run."
+        ),
+    )
     args = parser.parse_args()
 
     module = importlib.import_module(f"prompt_function.prompt_{args.dataset}")
@@ -210,7 +225,25 @@ def main():
 
     os.makedirs(os.path.dirname(output_data_path), exist_ok=True)
     meta_data_flag = False
-    if os.path.exists(output_data_path):
+    resume_positions: list[int] | None = None
+    if args.resume_indices_file:
+        # Resume mode: caller has determined exactly which dataset positions
+        # are missing from output_data_path. Append rows for just those; the
+        # metadata header is already present in the existing file.
+        if not os.path.exists(output_data_path):
+            raise FileNotFoundError(
+                f"--resume-indices-file requires an existing output JSONL with a metadata header: {output_data_path}"
+            )
+        resume_positions = []
+        with open(args.resume_indices_file, "r", encoding="utf-8") as fh:
+            for line in fh:
+                line = line.strip()
+                if not line:
+                    continue
+                resume_positions.append(int(line))
+        output_data = jsonlines.open(output_data_path, mode="a", flush=True)
+        meta_data_flag = True
+    elif os.path.exists(output_data_path):
         output_data = jsonlines.open(output_data_path, mode="a", flush=True)
         with open(output_data_path, "r") as f:
             line_count = sum(1 for _ in f)
@@ -220,9 +253,18 @@ def main():
     else:
         output_data = jsonlines.open(output_data_path, mode="w", flush=True)
 
-    if args.end_idx == -1:
-        args.end_idx = None
-    dataset = JsonlDataset(input_data_path)[args.start_idx:args.end_idx]
+    full_dataset = JsonlDataset(input_data_path)
+    if resume_positions is not None:
+        # Subset preserves the underlying __getitem__ shape so my_collate_fn
+        # keeps working unchanged.
+        if not resume_positions:
+            print("[INFO] resume-indices-file is empty; nothing to do.")
+            return
+        dataset = torch.utils.data.Subset(full_dataset, resume_positions)
+    else:
+        if args.end_idx == -1:
+            args.end_idx = None
+        dataset = full_dataset[args.start_idx:args.end_idx]
     dataloader = torch.utils.data.DataLoader(dataset, batch_size=args.batch_size, shuffle=False, collate_fn=my_collate_fn)
     client = build_client(args.api_base, args.api_key)
 
