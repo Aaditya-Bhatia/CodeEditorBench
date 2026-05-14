@@ -1,0 +1,4 @@
+Inference:   0%|          | 0/1 [00:00<?, ?it/s]Inference: 100%|██████████| 1/1 [00:00<00:00,  7.34it/s]Inference: 100%|██████████| 1/1 [00:00<00:00,  7.33it/s]
+[WARN] Skipping prompt (46928 chars): Error code: 400 - {'error': {'message': "This model's maximum context length is 16384 tokens. However, you requested 2048 output tokens and your prompt contains at least 14337 input tokens, for a total of at least 16385 tokens. Please reduce the length of the input prompt or the number of requested output tokens. (parameter=input_tokens, value=14337)", 'type': 'BadRequestError', 'param': 'input_tokens', 'code': 400}}
+Time used: 0.13840746879577637
+Each batch time: 0.13840746879577637
