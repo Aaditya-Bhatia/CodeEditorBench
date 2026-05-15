@@ -101,3 +101,7 @@ starcoder2-7b-lora-unclean74k-20260415T204908165034Z,CodeEditorBench,starcoder2-
 qwen2.5-coder-3b-instruct-lora-unclean-20260422T202740715059Z,CodeEditorBench,(quarantine cherry-pick),(see canonical's experiment),False,7,20395143,2444236
 qwen2.5-coder-14b-instruct-lora-unclean-20260422T200602565163Z,CodeEditorBench,(quarantine cherry-pick),(see canonical's experiment),False,7,20132052,2411800
 starcoder2-7b-baseline-20260415T200314684133Z,CodeEditorBench,(quarantine cherry-pick),(see canonical's experiment),False,7,118595085,5209429
+qwen2.5-coder-3b-lora-clean-20260515T165024236513Z,CodeEditorBench,qwen2.5-coder-3b-lora-clean,same_size,True,5,21007648,2533801
+qwen2.5-coder-3b-lora-dirty-ss-20260515T170923238880Z,CodeEditorBench,qwen2.5-coder-3b-lora-dirty-ss,same_size,True,5,21691639,2539574
+qwen2.5-coder-3b-lora-unclean-ss-20260515T172642718261Z,CodeEditorBench,qwen2.5-coder-3b-lora-unclean-ss,same_size,True,5,21257338,2463478
+qwen2.5-coder-3b-lora-unclean74k-20260515T170623225012Z,CodeEditorBench,qwen2.5-coder-3b-lora-unclean74k,same_size,True,5,67236647,4007349

@@ -107,4 +107,22 @@ qwen2.5-3b-lora-dirty-20260514T020245332605Z
 qwen2.5-coder-3b-instruct-lora-dirty-20260514T020219218392Z
 qwen3-4b-base-lora-dirty-20260514T022129874000Z
 starcoder2-3b-lora-dirty-20260514T031602013184Z
+qwen2.5-coder-3b-lora-clean-20260515T165024236513Z
+qwen2.5-coder-3b-lora-dirty-ss-20260515T170923238880Z
+qwen2.5-coder-3b-lora-unclean-ss-20260515T172642718261Z
+qwen2.5-coder-3b-lora-unclean74k-20260515T170623225012Z
 ```
+
+### New ablation runs (2026-05-15)
+
+A fresh ablation sweep using `run_new_ablations_3b.py` produced 4 new
+Qwen2.5-Coder-3B variants (`clean`, `dirty-ss`, `unclean-ss`,
+`unclean74k`). These are committed as `backups/<run>.tar.gz` (the
+post-2026-05-14 strategy); extract with `tar -xzf backups/<run>.tar.gz
+-C benchmark_runs/` before running the detached eval worker. A 5th
+planned variant (`qwen2.5-coder-3b-lora-dirty`, non-`-ss`) has no
+generation dir on the GPU pod yet; it may land later.
+
+Note: CanItEdit coverage for these adapters is currently absent — the
+matching CanItEdit runs all hit `generation_failed` and are being
+investigated.
