@@ -105,3 +105,4 @@ qwen2.5-coder-3b-lora-clean-20260515T165024236513Z,CodeEditorBench,qwen2.5-coder
 qwen2.5-coder-3b-lora-dirty-ss-20260515T170923238880Z,CodeEditorBench,qwen2.5-coder-3b-lora-dirty-ss,same_size,True,5,21691639,2539574
 qwen2.5-coder-3b-lora-unclean-ss-20260515T172642718261Z,CodeEditorBench,qwen2.5-coder-3b-lora-unclean-ss,same_size,True,5,21257338,2463478
 qwen2.5-coder-3b-lora-unclean74k-20260515T170623225012Z,CodeEditorBench,qwen2.5-coder-3b-lora-unclean74k,same_size,True,5,67236647,4007349
+qwen2.5-coder-3b-lora-dirty-20260515T165024311087Z,CodeEditorBench,qwen2.5-coder-3b-lora-dirty,same_size,True,5,23586364,2542490
