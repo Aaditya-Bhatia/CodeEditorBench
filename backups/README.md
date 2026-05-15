@@ -71,6 +71,7 @@ run's `judge/metrics/metrics_primary.csv` (extract first).
 
 ## See also
 
-- Full procedure: `Master_VLLM/docs/BACKUP_LAYOUT.md`
+- **Operational protocol (read first):** `Master_VLLM/.claude/agents/cross-repo-backup-protocol.md` — the single source of truth for commit/pull/recovery across both hosts.
+- Tarball format reference: `Master_VLLM/docs/BACKUP_LAYOUT.md`
 - Cross-repo layout + path-drift handling: `Master_VLLM/docs/repo_layout.md`
 - Run-classification rules (same-size vs different-size): `Master_VLLM/.claude/agents/results-pipeline-guide.md`
