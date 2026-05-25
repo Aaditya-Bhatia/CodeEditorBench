@@ -45,10 +45,11 @@ def parse_args():
     parser.add_argument(
         "--force-resolve-max-pending",
         type=int,
-        default=150,
+        default=1000,
         help="At stall_timeout OR max_wait, if pending<=this, force-mark stuck rows TLE and "
              "finalize instead of raising. HUSTOJ has 50 judge slots so the floor is 50; "
-             "default 150 absorbs queue stragglers (~1.5%% of a 10k dataset).",
+             "default 1000 absorbs queue stragglers (~10%% of a 10k dataset); large unclean "
+             "LoRAs routinely produce >150 infinite-loop generations.",
     )
     return parser.parse_args()
 
