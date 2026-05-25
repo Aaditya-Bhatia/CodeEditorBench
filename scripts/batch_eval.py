@@ -36,7 +36,7 @@ EVAL_WORKER = REPO_ROOT / "scripts" / "detached_eval_worker.py"
 SHOW_MATRIX = REPO_ROOT / "show_result_matrix.py"
 
 EVAL_ELIGIBLE_STATUSES = {"generation_complete", "eval_failed"}
-DEFAULT_MAX_WAIT = 4 * 60 * 60
+DEFAULT_MAX_WAIT = 8 * 60 * 60
 DEFAULT_STALL_TIMEOUT = 30 * 60
 
 _print_lock = threading.Lock()
