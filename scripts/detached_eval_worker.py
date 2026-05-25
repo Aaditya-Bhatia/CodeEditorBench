@@ -5,6 +5,7 @@ import fcntl
 import json
 import os
 import shlex
+import shutil
 import subprocess
 import sys
 import time
@@ -15,6 +16,12 @@ from typing import Dict, Optional
 INITIAL_MYSQL_READY_TIMEOUT_SECONDS = 60
 MYSQL_READY_TIMEOUT_SECONDS = 120
 MYSQL_READY_POLL_SECONDS = 2
+DATASET_DIRS = {
+    "debug": "code_debug",
+    "translate": "code_translate",
+    "polishment": "code_polishment",
+    "switch": "code_switch",
+}
 _PROJECTS_ROOT = Path(os.environ.get("PROJECTS_ROOT", str(Path(__file__).resolve().parent.parent.parent)))
 def _find_master_root() -> Path:
     for name in ("Master_VLLM", "Master-Benchmarking-Orchestrator"):
@@ -54,13 +61,15 @@ def parse_args():
     return parser.parse_args()
 
 
-def run(cmd, cwd=None, capture=False, check=True, env=None):
+def run(cmd, cwd=None, capture=False, check=True, env=None, timeout=None):
     kwargs = {"cwd": cwd, "check": check, "text": True}
     if capture:
         kwargs["stdout"] = subprocess.PIPE
         kwargs["stderr"] = subprocess.PIPE
     if env is not None:
         kwargs["env"] = env
+    if timeout is not None:
+        kwargs["timeout"] = timeout
     print("$", " ".join(cmd), flush=True)
     return subprocess.run(cmd, **kwargs)
 
@@ -126,6 +135,136 @@ def update_summary(summary_path: str, **updates):
         finally:
             os.close(dir_fd)
         fcntl.flock(handle.fileno(), fcntl.LOCK_UN)
+
+
+def load_summary(summary_path: str) -> Dict:
+    if not summary_path:
+        return {}
+    path = Path(summary_path)
+    if not path.exists():
+        return {}
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return {}
+
+
+def rewrite_gpu_pod_path(value: object, repo_root: Path) -> object:
+    if not isinstance(value, str):
+        return value
+    projects_root = repo_root.parent
+    replacements = {
+        "/workspace/CodeEditorBench": str(repo_root),
+        "/workspace/Master_VLLM": str(projects_root / "Master_VLLM"),
+        "/workspace/Master-Benchmarking-Orchestrator": str(projects_root / "Master_VLLM"),
+    }
+    for old, new in replacements.items():
+        if value == old or value.startswith(old + "/"):
+            return new + value[len(old):]
+    return value
+
+
+def rewrite_summary_paths(summary_path: str, repo_root: Path) -> Dict:
+    summary = load_summary(summary_path)
+    if not summary:
+        return {}
+    updates = {}
+    for key in (
+        "config_path",
+        "raw_root",
+        "clean_root",
+        "judge_template_dir",
+        "judge_dir",
+        "judge_solution_root",
+        "eval_log_path",
+    ):
+        rewritten = rewrite_gpu_pod_path(summary.get(key), repo_root)
+        if rewritten != summary.get(key):
+            updates[key] = rewritten
+    for key in ("generation_logs", "generation_jobs"):
+        value = summary.get(key)
+        if not isinstance(value, dict):
+            continue
+        rewritten = json.loads(json.dumps(value))
+        changed = False
+        for subkey, subvalue in rewritten.items():
+            if isinstance(subvalue, str):
+                new_value = rewrite_gpu_pod_path(subvalue, repo_root)
+                changed = changed or new_value != subvalue
+                rewritten[subkey] = new_value
+            elif isinstance(subvalue, dict):
+                for nested_key, nested_value in list(subvalue.items()):
+                    new_value = rewrite_gpu_pod_path(nested_value, repo_root)
+                    changed = changed or new_value != nested_value
+                    subvalue[nested_key] = new_value
+        if changed:
+            updates[key] = rewritten
+    if updates:
+        update_summary(summary_path, **updates)
+        summary.update(updates)
+    return summary
+
+
+def pick_clean_source(clean_dir: Path, run_name: str, staged_name: str) -> Optional[Path]:
+    candidates = []
+    if staged_name:
+        candidates.append(clean_dir / staged_name)
+    candidates.append(clean_dir / f"{run_name}.jsonl")
+    if clean_dir.exists():
+        candidates.extend(sorted(clean_dir.glob("*.jsonl")))
+    for candidate in candidates:
+        if candidate.exists() and candidate.is_file() and candidate.stat().st_size > 0:
+            return candidate
+    return None
+
+
+def preflight_judge_workspace(
+    repo_root: Path,
+    run_name: str,
+    judge_dir: Path,
+    judge_template_dir: Optional[Path],
+    summary_path: str,
+) -> None:
+    summary = rewrite_summary_paths(summary_path, repo_root)
+    clean_root = Path(summary.get("clean_root") or judge_dir.parent / "clean").resolve()
+    judge_solution_root = Path(summary.get("judge_solution_root") or judge_dir / "solution_folder").resolve()
+    staged_name = summary.get("staged_name") or f"{run_name}.jsonl"
+
+    if judge_template_dir:
+        conf_src = judge_template_dir / "etc" / "judge.conf"
+        scripts_src = judge_template_dir / "scripts"
+        solution_src = judge_template_dir / "solution_folder"
+        if not conf_src.exists():
+            raise FileNotFoundError(f"Judge template missing {conf_src}")
+        if not (judge_dir / "etc" / "judge.conf").exists():
+            (judge_dir / "etc").mkdir(parents=True, exist_ok=True)
+            shutil.copy2(conf_src, judge_dir / "etc" / "judge.conf")
+        if not (judge_dir / "scripts").exists() and scripts_src.exists():
+            shutil.copytree(scripts_src, judge_dir / "scripts", ignore=shutil.ignore_patterns("__pycache__"))
+        if not (judge_dir / "solution_folder").exists() and solution_src.exists():
+            shutil.copytree(solution_src, judge_dir / "solution_folder")
+
+    for name in ("build", "data", "src", "leetcode_template", "log", "monitor", "metrics"):
+        (judge_dir / name).mkdir(parents=True, exist_ok=True)
+
+    missing = []
+    staged = []
+    for dataset, dirname in DATASET_DIRS.items():
+        target_dir = judge_solution_root / dirname
+        target_dir.mkdir(parents=True, exist_ok=True)
+        target = target_dir / staged_name
+        if not target.exists() or target.stat().st_size == 0:
+            source = pick_clean_source(clean_root / dirname, run_name, staged_name)
+            if source:
+                shutil.copyfile(source, target)
+                staged.append(str(target))
+        if not target.exists() or target.stat().st_size == 0:
+            missing.append(f"{dataset}:{target}")
+
+    if missing:
+        raise FileNotFoundError("Missing staged judge solution files: " + ", ".join(missing))
+    if staged:
+        update_summary(summary_path, staged_solution_files=staged)
 
 
 def read_judge_config(container_name: str) -> Dict[str, str]:
@@ -384,16 +523,32 @@ def ensure_judge_runtime(container_name: str, timeout: int = 30):
 
 
 def stop_container(container_name: str):
-    run(["docker", "rm", "-f", container_name], capture=True, check=False)
+    try:
+        run(["docker", "rm", "-f", container_name], capture=True, check=False, timeout=90)
+    except subprocess.TimeoutExpired:
+        print(f"WARNING: timed out removing container {container_name}; continuing", flush=True)
 
 
 def main():
     args = parse_args()
     repo_root = Path(__file__).resolve().parents[1]
-    judge_dir = Path(args.judge_dir).resolve()
-    judge_template_dir = Path(args.judge_template_dir).resolve() if args.judge_template_dir else None
+    summary = rewrite_summary_paths(args.summary_path, repo_root)
+    judge_dir_value = summary.get("judge_dir") or rewrite_gpu_pod_path(args.judge_dir, repo_root)
+    judge_template_value = (
+        summary.get("judge_template_dir")
+        or rewrite_gpu_pod_path(args.judge_template_dir, repo_root)
+    )
+    judge_dir = Path(judge_dir_value).resolve()
+    judge_template_dir = Path(judge_template_value).resolve() if judge_template_value else None
 
     try:
+        preflight_judge_workspace(
+            repo_root,
+            args.run_name,
+            judge_dir,
+            judge_template_dir,
+            args.summary_path,
+        )
         update_summary(
             args.summary_path,
             status="eval_running",
@@ -407,12 +562,12 @@ def main():
         quoted_run_name = shlex.quote(args.run_name)
         docker_exec(args.container_name, f"cd /home/judge/scripts && python3 add_template.py --model-name {quoted_run_name}")
         docker_exec(args.container_name, f"cd /home/judge/scripts && python3 submit_solution.py --model-name {quoted_run_name}")
-        ensure_judge_runtime(args.container_name)
 
         model_id = fetch_model_id(args.container_name, args.run_name)
         if model_id is None:
             raise RuntimeError(f"Could not find submitted model_id for run {args.run_name}")
 
+        ensure_judge_runtime(args.container_name)
         normalized_pending_rows = normalize_pending_queue(args.container_name, model_id)
         update_summary(args.summary_path, model_id=model_id, normalized_pending_rows=normalized_pending_rows)
         started_at = time.monotonic()
@@ -492,11 +647,16 @@ def main():
                 "--plus-output-path /home/judge/metrics/metrics_plus.csv"
             ),
         )
+        try:
+            status = fetch_status(args.container_name, model_id)
+        except Exception as exc:
+            print(f"WARNING: could not refresh final eval_status after metrics: {exc}", flush=True)
         update_summary(
             args.summary_path,
             status="eval_complete",
             eval_completed_at_utc=datetime.now(timezone.utc).isoformat(),
             metrics_path=metrics_path,
+            eval_status=status,
             eval_failed_at_utc=None,
             error=None,
         )

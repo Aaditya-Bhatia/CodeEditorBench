@@ -17,6 +17,7 @@ Usage:
 """
 
 import argparse
+import csv
 import hashlib
 import json
 import os
@@ -115,10 +116,14 @@ def count_our_containers():
 
 
 def cleanup_container(container_name):
-    subprocess.run(["docker", "stop", container_name],
-                   capture_output=True, check=False, timeout=120)
-    subprocess.run(["docker", "rm", "-f", container_name],
-                   capture_output=True, check=False, timeout=60)
+    for cmd, timeout in (
+        (["docker", "stop", container_name], 120),
+        (["docker", "rm", "-f", container_name], 60),
+    ):
+        try:
+            subprocess.run(cmd, capture_output=True, check=False, timeout=timeout)
+        except subprocess.TimeoutExpired:
+            tprint(f"WARNING cleanup timed out: {' '.join(cmd)}")
 
 
 def cleanup_all_stopped():
@@ -146,6 +151,39 @@ def resolve_container_name(summary):
     if name and name != "codeeditorbench_judge":
         return name
     return default_container_name(summary["run_name"])
+
+
+def has_valid_metrics(summary):
+    metrics_path = summary.get("metrics_path")
+    if not metrics_path:
+        return False
+    path = Path(metrics_path)
+    if not path.exists() or path.stat().st_size == 0:
+        return False
+    try:
+        with path.open(newline="", encoding="utf-8") as handle:
+            rows = list(csv.DictReader(handle))
+    except (OSError, csv.Error):
+        return False
+    if not rows:
+        return False
+    row = rows[-1]
+    try:
+        return int(float(row.get("solution_num") or 0)) > 0
+    except ValueError:
+        return False
+
+
+def completed_on_recheck(run_dir):
+    fresh = load_summary(run_dir)
+    if not fresh or fresh.get("status") != "eval_complete":
+        return False, fresh
+    if has_valid_metrics(fresh):
+        return True, fresh
+    eval_status = fresh.get("eval_status") or {}
+    if eval_status.get("pending") == 0 and eval_status.get("total", 0) > 0:
+        return True, fresh
+    return False, fresh
 
 
 def run_eval_worker(run_dir, summary, max_wait, stall_timeout, stagger_seconds):
@@ -208,10 +246,16 @@ def run_eval_worker(run_dir, summary, max_wait, stall_timeout, stagger_seconds):
         elapsed = time.monotonic() - start
         if proc.returncode == 0:
             return (run_name, True, f"completed in {elapsed/60:.1f}m")
+        completed, _fresh = completed_on_recheck(run_dir)
+        if completed:
+            return (run_name, True, f"completed despite worker rc={proc.returncode} after {elapsed/60:.1f}m")
         return (run_name, False, f"exit code {proc.returncode} after {elapsed/60:.1f}m "
                                   f"(log: {log_path})")
     except subprocess.TimeoutExpired:
         elapsed = time.monotonic() - start
+        completed, _fresh = completed_on_recheck(run_dir)
+        if completed:
+            return (run_name, True, f"completed before worker timeout after {elapsed/60:.1f}m")
         return (run_name, False, f"hard timeout after {elapsed/60:.1f}m")
     except Exception as exc:
         return (run_name, False, str(exc))
@@ -310,8 +354,8 @@ def main():
 
         retry_candidates = []
         for run_dir, summary, _msg in failed:
-            fresh = load_summary(run_dir)
-            if fresh and fresh.get("status") == "eval_complete":
+            completed, fresh = completed_on_recheck(run_dir)
+            if completed:
                 grand_ok += 1
                 tprint(f"SKIP {run_dir.name}: already eval_complete on recheck")
                 continue
