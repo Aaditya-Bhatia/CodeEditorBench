@@ -42,6 +42,14 @@ def parse_args():
     parser.add_argument("--poll-interval", type=int, default=60)
     parser.add_argument("--max-wait-seconds", type=int, default=4 * 60 * 60)
     parser.add_argument("--stall-timeout-seconds", type=int, default=30 * 60)
+    parser.add_argument(
+        "--force-resolve-max-pending",
+        type=int,
+        default=150,
+        help="At stall_timeout OR max_wait, if pending<=this, force-mark stuck rows TLE and "
+             "finalize instead of raising. HUSTOJ has 50 judge slots so the floor is 50; "
+             "default 150 absorbs queue stragglers (~1.5%% of a 10k dataset).",
+    )
     return parser.parse_args()
 
 
@@ -314,6 +322,30 @@ def normalize_pending_queue(container_name: str, model_id: int):
     return int(output) if output else 0
 
 
+def force_resolve_pending(container_name: str, model_id: int, result_code: int = 7):
+    # HUSTOJ has exactly 50 judge worker slots (run0..run49). When the queue
+    # narrows to ~50 prompts, generations with non-terminating user code can
+    # fill every slot; renormalize cycles just redispatch the same rows.
+    # Force-mark surviving pending rows with a non-accepted terminal code
+    # (default 7 = Time Limit Exceeded) so compute_metrics can finalize.
+    code = (
+        "import pymysql\n"
+        "vals={}\n"
+        "for line in open('/home/judge/etc/judge.conf'):\n"
+        "    if '=' in line and not line.strip().startswith('#'):\n"
+        "        k,v=line.split('=',1); vals[k.strip()]=v.strip()\n"
+        "conn=pymysql.connect(host=vals['OJ_HOST_NAME'], port=int(vals['OJ_PORT_NUMBER']), "
+        "user=vals['OJ_USER_NAME'], password=vals['OJ_PASSWORD'], database=vals['OJ_DB_NAME'])\n"
+        "cur=conn.cursor()\n"
+        f"cur.execute(\"UPDATE solution SET result=%s WHERE model_id=%s AND (result < 4 OR result = 14)\", ({result_code}, {model_id}))\n"
+        "conn.commit()\n"
+        "print(cur.rowcount)\n"
+        "cur.close(); conn.close()\n"
+    )
+    output = docker_py(container_name, code)
+    return int(output) if output else 0
+
+
 def reset_judge_runtime_state(container_name: str):
     command = r"""
 set -euo pipefail
@@ -409,10 +441,40 @@ def main():
                 ensure_judge_runtime(args.container_name)
                 last_runtime_restart_at = time.monotonic()
             if elapsed > args.max_wait_seconds:
+                if 0 < status["pending"] <= args.force_resolve_max_pending:
+                    forced = force_resolve_pending(args.container_name, model_id)
+                    print(
+                        f"  max_wait reached at pending={status['pending']} "
+                        f"(<={args.force_resolve_max_pending}); force-marked {forced} rows as TLE to finalize",
+                        flush=True,
+                    )
+                    status = fetch_status(args.container_name, model_id)
+                    update_summary(
+                        args.summary_path,
+                        eval_status=status,
+                        force_resolved_rows=forced,
+                    )
+                    if status["pending"] == 0:
+                        break
                 raise TimeoutError(
                     f"Timed out waiting for eval completion after {int(elapsed)}s for run={args.run_name} model_id={model_id}"
                 )
             if stalled_for > args.stall_timeout_seconds:
+                if 0 < status["pending"] <= args.force_resolve_max_pending:
+                    forced = force_resolve_pending(args.container_name, model_id)
+                    print(
+                        f"  stall persisted at pending={status['pending']} (<={args.force_resolve_max_pending}); "
+                        f"force-marked {forced} rows as TLE to finalize",
+                        flush=True,
+                    )
+                    status = fetch_status(args.container_name, model_id)
+                    update_summary(
+                        args.summary_path,
+                        eval_status=status,
+                        force_resolved_rows=forced,
+                    )
+                    if status["pending"] == 0:
+                        break
                 raise TimeoutError(
                     f"Eval stalled for {int(stalled_for)}s with pending={status['pending']} for run={args.run_name} model_id={model_id}"
                 )
