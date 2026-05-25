@@ -38,6 +38,7 @@ qwen2.5-coder-14b-instruct-lora-clean-20260418T135846185197Z,CodeEditorBench,qwe
 qwen2.5-coder-14b-instruct-lora-dirty-20260418T144429672394Z,CodeEditorBench,qwen2.5-coder-14b-instruct-lora-dirty,different_size,True,7,20211163,2403374
 qwen2.5-coder-14b-instruct-lora-dirty-20260513T090049388059Z,CodeEditorBench,qwen2.5-coder-14b-instruct-lora-dirty,same_size,True,5,20112353,2389912
 qwen2.5-coder-14b-instruct-lora-unclean-20260422T015606876627Z,CodeEditorBench,qwen2.5-coder-14b-instruct-lora-unclean,same_size,True,5,20195607,2415623
+qwen2.5-coder-14b-instruct-lora-unclean-20260422T200602565163Z,CodeEditorBench,(quarantine cherry-pick),(see canonical's experiment),False,7,20132052,2411800
 qwen2.5-coder-14b-instruct-lora-unclean74k-20260418T151456451128Z,CodeEditorBench,qwen2.5-coder-14b-instruct-lora-unclean74k,different_size,True,7,20425534,2424876
 qwen2.5-coder-14b-lora-clean-20260418T093649488110Z,CodeEditorBench,qwen2.5-coder-14b-lora-clean,different_size,True,7,142299014,4319972
 qwen2.5-coder-14b-lora-dirty-20260418T114704125314Z,CodeEditorBench,qwen2.5-coder-14b-lora-dirty,different_size,True,7,160720212,4881927
@@ -50,7 +51,13 @@ qwen2.5-coder-3b-instruct-lora-clean-20260418T155605559788Z,CodeEditorBench,qwen
 qwen2.5-coder-3b-instruct-lora-dirty-20260409T233529274300Z,CodeEditorBench,qwen2.5-coder-3b-instruct-lora-dirty,different_size,True,7,22852830,3220009
 qwen2.5-coder-3b-instruct-lora-dirty-20260514T020219218392Z,CodeEditorBench,qwen2.5-coder-3b-instruct-lora-dirty,same_size,True,5,20514504,2494579
 qwen2.5-coder-3b-instruct-lora-unclean-20260422T021850084897Z,CodeEditorBench,qwen2.5-coder-3b-instruct-lora-unclean,same_size,True,5,20297031,2441270
+qwen2.5-coder-3b-instruct-lora-unclean-20260422T202740715059Z,CodeEditorBench,(quarantine cherry-pick),(see canonical's experiment),False,7,20395143,2444236
 qwen2.5-coder-3b-instruct-lora-unclean74k-20260409T234720085945Z,CodeEditorBench,qwen2.5-coder-3b-instruct-lora-unclean74k,different_size,True,7,22290005,2965301
+qwen2.5-coder-3b-lora-clean-20260515T165024236513Z,CodeEditorBench,qwen2.5-coder-3b-lora-clean,same_size,True,5,21007648,2533801
+qwen2.5-coder-3b-lora-dirty-20260515T165024311087Z,CodeEditorBench,qwen2.5-coder-3b-lora-dirty,same_size,True,5,23586364,2542490
+qwen2.5-coder-3b-lora-dirty-ss-20260515T170923238880Z,CodeEditorBench,qwen2.5-coder-3b-lora-dirty-ss,same_size,True,5,21691639,2539574
+qwen2.5-coder-3b-lora-unclean-ss-20260515T172642718261Z,CodeEditorBench,qwen2.5-coder-3b-lora-unclean-ss,same_size,True,5,21257338,2463478
+qwen2.5-coder-3b-lora-unclean74k-20260515T170623225012Z,CodeEditorBench,qwen2.5-coder-3b-lora-unclean74k,same_size,True,5,67236647,4007349
 qwen2.5-coder-7b-baseline-20260409T141432Z,CodeEditorBench,qwen2.5-coder-7b-baseline,different_size,True,7,84916113,7033855
 qwen2.5-coder-7b-instruct-baseline-20260410T235722887917Z,CodeEditorBench,qwen2.5-coder-7b-instruct-baseline,different_size,True,7,20071518,2635667
 qwen2.5-coder-7b-instruct-lora-clean-20260411T004852237385Z,CodeEditorBench,qwen2.5-coder-7b-instruct-lora-clean,different_size,True,7,20110513,2528513
@@ -66,6 +73,7 @@ qwen2.5-coder-7b-lora-unclean74k-20260418T170033879725Z,CodeEditorBench,qwen2.5-
 qwen3-14b-base-baseline-20260409T141919Z,CodeEditorBench,qwen3-14b-base-baseline,different_size,True,7,25177612,3819721
 qwen3-14b-base-lora-clean-20260417T012439790306Z,CodeEditorBench,qwen3-14b-base-lora-clean,different_size,True,7,119953385,3850843
 qwen3-14b-base-lora-dirty-20260418T220219120808Z,CodeEditorBench,qwen3-14b-base-lora-dirty,different_size,True,7,93082213,3727690
+qwen3-14b-base-lora-dirty-20260513T181822594207Z,CodeEditorBench,qwen3-14b-base-lora-dirty,same_size,True,5,66388938,3267873
 qwen3-14b-base-lora-unclean-20260422T022848031208Z,CodeEditorBench,qwen3-14b-base-lora-unclean,same_size,True,5,111024050,3678809
 qwen3-14b-base-lora-unclean74k-20260418T235622400870Z,CodeEditorBench,qwen3-14b-base-lora-unclean74k,different_size,True,7,34079258,2570681
 qwen3-4b-base-baseline-20260409T150915Z,CodeEditorBench,qwen3-4b-base-baseline,different_size,True,7,25415798,3839640
@@ -93,16 +101,9 @@ starcoder2-3b-lora-dirty-20260514T031602013184Z,CodeEditorBench,starcoder2-3b-lo
 starcoder2-3b-lora-unclean-20260422T052501034373Z,CodeEditorBench,starcoder2-3b-lora-unclean,same_size,True,7,28720030,2452939
 starcoder2-3b-lora-unclean74k-20260415T190943073079Z,CodeEditorBench,starcoder2-3b-lora-unclean74k,different_size,True,7,24667910,2344680
 starcoder2-7b-baseline-20260409T221304723202Z,CodeEditorBench,starcoder2-7b-baseline,different_size,True,7,118757814,5190562
+starcoder2-7b-baseline-20260415T200314684133Z,CodeEditorBench,(quarantine cherry-pick),(see canonical's experiment),False,7,118595085,5209429
 starcoder2-7b-lora-clean-20260415T192522528383Z,CodeEditorBench,starcoder2-7b-lora-clean,different_size,True,7,23289220,2397084
 starcoder2-7b-lora-dirty-20260415T194416368888Z,CodeEditorBench,starcoder2-7b-lora-dirty,different_size,True,7,23625130,2367221
 starcoder2-7b-lora-dirty-20260512T162336480292Z,CodeEditorBench,starcoder2-7b-lora-dirty,same_size,True,5,21853800,2316488
 starcoder2-7b-lora-unclean-20260423T171233725739Z,CodeEditorBench,starcoder2-7b-lora-unclean,same_size,True,5,22806107,2363053
 starcoder2-7b-lora-unclean74k-20260415T204908165034Z,CodeEditorBench,starcoder2-7b-lora-unclean74k,different_size,True,7,22684740,2339429
-qwen2.5-coder-3b-instruct-lora-unclean-20260422T202740715059Z,CodeEditorBench,(quarantine cherry-pick),(see canonical's experiment),False,7,20395143,2444236
-qwen2.5-coder-14b-instruct-lora-unclean-20260422T200602565163Z,CodeEditorBench,(quarantine cherry-pick),(see canonical's experiment),False,7,20132052,2411800
-starcoder2-7b-baseline-20260415T200314684133Z,CodeEditorBench,(quarantine cherry-pick),(see canonical's experiment),False,7,118595085,5209429
-qwen2.5-coder-3b-lora-clean-20260515T165024236513Z,CodeEditorBench,qwen2.5-coder-3b-lora-clean,same_size,True,5,21007648,2533801
-qwen2.5-coder-3b-lora-dirty-ss-20260515T170923238880Z,CodeEditorBench,qwen2.5-coder-3b-lora-dirty-ss,same_size,True,5,21691639,2539574
-qwen2.5-coder-3b-lora-unclean-ss-20260515T172642718261Z,CodeEditorBench,qwen2.5-coder-3b-lora-unclean-ss,same_size,True,5,21257338,2463478
-qwen2.5-coder-3b-lora-unclean74k-20260515T170623225012Z,CodeEditorBench,qwen2.5-coder-3b-lora-unclean74k,same_size,True,5,67236647,4007349
-qwen2.5-coder-3b-lora-dirty-20260515T165024311087Z,CodeEditorBench,qwen2.5-coder-3b-lora-dirty,same_size,True,5,23586364,2542490
